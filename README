@@ -1,0 +1,129 @@
+
+Fabric Release Deployment
+*************************
+
+Contents:
+
+
+"fabricext.deploy"
+==================
+
+Fabric Deploy Strategy
+
+class class fabricext.deploy.Release(base_path)
+
+   Bases: "fabricext.transaction.Transaction"
+
+   Wrap deployment code in a release deploy strategy, which provided
+   rollback on error and release rollback.
+
+   The release strategy mimics Capistranos deploy strategy. It builds
+   out a directory structure that includes the current version
+   deployed, previous releases named by date, and shared resources
+   separate from deployed code:
+
+      base_path/
+        - @current (-> 2013-01-01.123456)
+        - releases/
+          - 2013-01-05.12345/
+          - 2013-01-01.12356/
+        - shared/
+          - uploads/
+          - files/
+          - logs/
+
+   The "Release" module would be used similar to the
+   "fabricext.deploy.Transaction", as a context manager:
+
+      with release('/tmp/path/release') as r:
+          print env.base_dir
+          print r.releases()
+
+   The context manager handles creation of the above path structure
+   before performing a release, and on a thrown exception, performs a
+   rollback on commands executed. The context manager also sets
+   *env.base_dir* to the current release path.
+
+   Parameters:
+      **base_path** -- base path to release
+
+   cleanup()
+
+      Clean up old releases from the release path
+
+   create_release()
+
+      Make new release path.
+
+      This generates a name for a new release and creates the release
+      in the releases path. This also sets up the path for rollback,
+      removing the created paths. Finally, it links the shared paths
+      into the release.
+
+   releases()
+
+      Fetch a list of releases
+
+   rollback_release()
+
+      Rollback to previous release.
+
+      This method should be called on an instance of the "Release",
+      class, not as a context manager -- this would create a new
+      release and wrap the logic with rollbacks.
+
+   setup()
+
+      Set up release paths and shared content.
+
+      Create release and shared paths if missing. Then, create a new
+      path, generated based on the time, for the new release. This
+      will set the env variable *env.base_dir* to the fresh path.
+
+   symlink()
+
+      Symlink *current_path* to *current_rel*
+
+
+"fabricext.transaction"
+=======================
+
+Fabric transaction support
+
+class class fabricext.transaction.Transaction
+
+   Bases: "object"
+
+   Create a context manager to wrap up a transaction with rollbacks.
+
+   This class is used to wrap up code with an exception test and
+   rollback. Rollback functions can be added using the "on_rollback()"
+   method of  an instance of the "Transaction" context manager:
+
+      with transaction() as t:
+          run('mkdir /tmp/foobar')
+          t.on_rollback('rm -rf /tmp/foobar')
+
+   The "on_rollback()" method appends each rollback function to a list
+   of rollback calls -- either a string instance or a callable
+   function can be passed. On an exception in the context manager,
+   each rollback is called in reverse.
+
+   on_rollback(cmd)
+
+      Append command *cmd* to rollback list.
+
+      The *cmd* parameter can be a string, which is then run remotely
+      on the host, or it can be a function, which is called directly
+      on rollback.
+
+      Parameters:
+         **cmd** (*str or function*) -- command to execute on rollback
+
+   rollback()
+
+      Rollback transaction by executing the list of rollback commands.
+
+      Each command in *rollback_cmds* will be executed remotely. If
+      *cmd* is a string, execute remotely. If *cmd* is a function,
+      call the function.
