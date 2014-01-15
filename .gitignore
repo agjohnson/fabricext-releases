@@ -1,2 +1,4 @@
-sytanx: glob
+syntax: glob
 *.pyc
+*.swp
+build/*

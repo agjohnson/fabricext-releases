@@ -2,7 +2,7 @@
 Fabric Release Deployment
 '''
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(
@@ -14,7 +14,8 @@ setup(
     author_email='aj@ohess.org',
     description='Fabric transaction and release wrapper',
     long_description=__doc__,
-    namespace_packages = ['fabricext'],
+    packages=find_packages(),
+    namespace_packages=['fabricext'],
     install_requires=[
         'fabric'
     ]
