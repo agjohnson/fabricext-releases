@@ -47,10 +47,12 @@ class GitDeploy(DeployBase):
             )
             run('rsync -lrp {cache}/ {release}/'.format(
                 cache=self.remote_path('cache'),
-                release=self.release.rel_path
+                release=self.release.current_release_path()
             ))
-        except:
-            puts(red('Failure updating code on remote servers.'))
+        except Exception as e:
+            puts(red(
+                'Failure updating code on remote servers: {0}'.format(str(e))
+            ))
 
 
 class GitIndexDeploy(GitDeploy):

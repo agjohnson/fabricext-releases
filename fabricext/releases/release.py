@@ -95,15 +95,24 @@ class Release(Transaction, TaskInjector):
         releases path. This also sets up the path for rollback, removing the
         created paths. Finally, it links the shared paths into the release.
         '''
-        self.current_rel = self._gen_rel()
         puts(green('Creating new release path'))
         # Make dir for release
-        env.base_dir = os.path.join(self.release_path, self.current_rel)
+        env.base_dir = self.current_release_path()
         run('mkdir -p {}'.format(env.base_dir))
         self.on_rollback('rm -rf \'{}\''.format(env.base_dir))
         run('ln -vs {0}/{{log,static}} {1}/'.format(
             self.shared_path, env.base_dir
         ))
+
+    def current_release(self):
+        '''Return or generate a new release name'''
+        if self.current_rel is None:
+            self.current_rel = self._gen_rel()
+        return self.current_rel
+
+    def current_release_path(self):
+        '''Path for current release'''
+        return os.path.join(self.release_path, self.current_release())
 
     @methodtask
     def cleanup(self):
@@ -126,7 +135,7 @@ class Release(Transaction, TaskInjector):
         if exists(self.current_path):
             run('rm {}'.format(self.current_path))
         run('ln -nfs {0} {1}'.format(
-            os.path.join(self.release_path, self.current_rel),
+            self.current_release_path(),
             self.current_path
         ))
 
