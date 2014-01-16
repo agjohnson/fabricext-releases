@@ -6,7 +6,8 @@ import os
 import os.path
 
 from fabric.api import run, lcd, local, puts
-from fabric.colors import green, red
+from fabric.utils import error
+from fabric.colors import green
 from fabric.contrib.project import rsync_project
 
 from ..inject import methodtask
@@ -28,9 +29,11 @@ class GitDeploy(DeployBase):
         if not os.path.exists(self.build_path):
             os.mkdir(self.build_path)
         try:
-            self.checkout()
+            fn = getattr(self, 'checkout')
         except AttributeError:
             pass
+        finally:
+            fn()
         super(GitDeploy, self).build()
 
     def checkout(self):
@@ -50,9 +53,7 @@ class GitDeploy(DeployBase):
                 release=self.release.current_release_path()
             ))
         except Exception as e:
-            puts(red(
-                'Failure updating code on remote servers: {0}'.format(str(e))
-            ))
+            error('Failure updating code', exception=e)
 
 
 class GitIndexDeploy(GitDeploy):
@@ -68,5 +69,5 @@ class GitIndexDeploy(GitDeploy):
                 local('git checkout-index --prefix={path}/ -a'.format(
                     path=self.build_path
                 ))
-        except:
-            puts(red('Failure checking out.'))
+        except Exception as e:
+            error('Failure checking out', exception=e)

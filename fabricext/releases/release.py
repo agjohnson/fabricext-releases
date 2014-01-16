@@ -6,14 +6,15 @@ import os.path
 from datetime import date, datetime
 
 from fabric.api import *  # noqa
-from fabric.colors import green, red
+from fabric.colors import green
+from fabric.utils import error, warn
 from fabric.contrib.files import exists
 
 from .transaction import Transaction
-from .inject import TaskInjector, methodtask
+#from .inject import TaskInjector
 
 
-class Release(Transaction, TaskInjector):
+class Release(Transaction):
     '''Wrap deployment code in a release deploy strategy, which provided
     rollback on error and release rollback.
 
@@ -63,15 +64,13 @@ class Release(Transaction, TaskInjector):
 
     def __exit__(self, type, value, tb):
         if tb is not None:
-            # Exception implicitly re-raised on return
-            puts(red('Rolling back release to previous version'))
+            error('Release failed.', func=warn)
         else:
             puts(green('Release successful.'))
             self.symlink()
             self.cleanup()
         super(Release, self).__exit__(type, value, tb)
 
-    @methodtask
     def setup(self):
         '''Set up release paths and shared content.
 
@@ -81,7 +80,7 @@ class Release(Transaction, TaskInjector):
         '''
         puts(green('Setting up release paths.'))
         if not exists(self.base_path, verbose=True):
-            raise Exception('Missing base path.')
+            error('Missing base path.')
         with settings(warn_only=True):
             for path in [self.release_path, self.shared_path]:
                 if not exists(path):
@@ -114,7 +113,6 @@ class Release(Transaction, TaskInjector):
         '''Path for current release'''
         return os.path.join(self.release_path, self.current_release())
 
-    @methodtask
     def cleanup(self):
         '''Clean up old releases from the release path'''
         puts(green('Cleaning up releases.'))
@@ -129,7 +127,6 @@ class Release(Transaction, TaskInjector):
                 [os.path.join(self.release_path, d) for d in rels]
             )
 
-    @methodtask
     def symlink(self):
         '''Symlink `current_path` to `current_rel`'''
         if exists(self.current_path):
@@ -148,7 +145,7 @@ class Release(Transaction, TaskInjector):
         '''
         rels = self.releases()
         if len(rels) < 2:
-            puts(red('No previous release found!'))
+            warn('No previous release found')
             return False
         old_rel = rels[-1]
         self.current_rel = rels[-2]

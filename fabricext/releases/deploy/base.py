@@ -16,26 +16,36 @@ class DeployBase(TaskInjector):
             release = Release(deploy_path)
         self.release = release
 
+        # Set fabric options
+        env.new_style_tasks = True
+        env.colorize_errors = True
+
     @methodtask
     def build(self):
         '''Build project'''
         try:
-            self.compile()
+            fn = getattr(self, 'compile')
         except AttributeError:
             pass
+        finally:
+            fn()
 
     @methodtask
     def update(self):
         '''Sync project with server'''
         with self.release:
             try:
-                self.sync()
+                fn = getattr(self, 'sync')
             except AttributeError:
                 pass
-            try:
-                self.finalize()
-            except AttributeError:
-                pass
+            finally:
+                fn()
+                try:
+                    fn = getattr(self, 'finalize')
+                except AttributeError:
+                    pass
+                finally:
+                    fn()
 
     def local_path(self, *args):
         return os.path.join(

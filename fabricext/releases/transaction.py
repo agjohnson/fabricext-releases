@@ -5,7 +5,8 @@ Fabric transaction support
 import types
 
 from fabric.api import *  # noqa
-from fabric.colors import green, red
+from fabric.utils import error, warn
+from fabric.colors import green
 
 
 class Transaction(object):
@@ -36,8 +37,8 @@ class Transaction(object):
         if tb is None:
             puts(green('Finishing transaction.'))
         else:
-            puts(red('Transaction failed.'))
-            puts(red('Rolling back.'))
+            error('Transaction failed.', func=warn)
+            error('Rolling back.', func=warn)
             self.rollback()
 
     def on_rollback(self, cmd):
