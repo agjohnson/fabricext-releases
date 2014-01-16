@@ -66,7 +66,7 @@ class GitIndexDeploy(GitDeploy):
         puts(green('Checking out index to temporary path.'))
         try:
             with lcd(self.local_path()):
-                local('git checkout-index --prefix={path}/ -a'.format(
+                local('git checkout-index --prefix={path}/ -a -f'.format(
                     path=self.build_path
                 ))
         except Exception as e:
