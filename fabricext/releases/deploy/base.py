@@ -27,12 +27,15 @@ class DeployBase(TaskInjector):
     @methodtask
     def update(self):
         '''Sync project with server'''
-        try:
-            with self.release:
+        with self.release:
+            try:
                 self.sync()
+            except AttributeError:
+                pass
+            try:
                 self.finalize()
-        except AttributeError:
-            pass
+            except AttributeError:
+                pass
 
     def local_path(self, *args):
         return os.path.join(
@@ -41,4 +44,4 @@ class DeployBase(TaskInjector):
         )
 
     def remote_path(self, name):
-        return os.path.join(self.release.deploy_path, name)
+        return os.path.join(self.release.base_path, name)
