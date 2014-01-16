@@ -6,9 +6,9 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='fabricext-deploy',
+    name='fabricext-releases',
     version='0.1',
-    url='http://github.com/agjohnson/fabricext-deploy',
+    url='http://github.com/agjohnson/fabricext-releases',
     license='MIT',
     author='Anthony Johnson',
     author_email='aj@ohess.org',
