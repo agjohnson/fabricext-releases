@@ -54,6 +54,7 @@ class Release(Transaction, TaskInjector):
         self.release_path = os.path.join(base_path, 'releases')
         self.current_path = os.path.join(base_path, 'current')
         self.shared_path = os.path.join(base_path, 'shared')
+        super(Release, self).__init__()
 
     def __enter__(self):
         self.setup()
