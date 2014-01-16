@@ -2,17 +2,17 @@
 Fabric transaction support
 '''
 
-from fabric.api import *
-from fabric.colors import green, red
-
 import types
+
+from fabric.api import *  # noqa
+from fabric.colors import green, red
 
 
 class Transaction(object):
     '''Create a context manager to wrap up a transaction with rollbacks.
 
     This class is used to wrap up code with an exception test and rollback.
-    Rollback functions can be added using the :py:meth:`.on_rollback` method of 
+    Rollback functions can be added using the :py:meth:`.on_rollback` method of
     an instance of the :py:class:`.Transaction` context manager::
 
         with transaction() as t:

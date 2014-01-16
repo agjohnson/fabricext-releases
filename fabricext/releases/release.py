@@ -2,17 +2,18 @@
 Fabric Deploy Strategy
 '''
 
-from fabric.api import *
-from fabric.colors import green, red
-from fabric.contrib.files import exists
-
 import os.path
 from datetime import date, datetime
 
-from fabricext.transaction import Transaction
+from fabric.api import *  # noqa
+from fabric.colors import green, red
+from fabric.contrib.files import exists
+
+from .transaction import Transaction
+from .inject import TaskInjector, methodtask
 
 
-class Release(Transaction):
+class Release(Transaction, TaskInjector):
     '''Wrap deployment code in a release deploy strategy, which provided
     rollback on error and release rollback.
 
@@ -69,6 +70,7 @@ class Release(Transaction):
             self.cleanup()
         super(Release, self).__exit__(type, value, tb)
 
+    @methodtask
     def setup(self):
         '''Set up release paths and shared content.
 
@@ -102,6 +104,7 @@ class Release(Transaction):
             self.shared_path, env.base_dir
         ))
 
+    @methodtask
     def cleanup(self):
         '''Clean up old releases from the release path'''
         puts(green('Cleaning up releases.'))
@@ -116,6 +119,7 @@ class Release(Transaction):
                 [os.path.join(self.release_path, d) for d in rels]
             )
 
+    @methodtask
     def symlink(self):
         '''Symlink `current_path` to `current_rel`'''
         if exists(self.current_path):
