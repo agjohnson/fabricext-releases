@@ -45,11 +45,16 @@ class Release(Transaction):
     current release path.
 
     :param base_path: base path to release
+    :param shared: override shared paths for the release
     '''
 
-    def __init__(self, base_path):
+    shared = ['log']
+
+    def __init__(self, base_path, shared=None):
         # Sets up internally used paths
         self.base_path = base_path
+        if shared is not None:
+            self.shared = shared
         self.current_rel = None
         self.previous_rel = None
         self.release_path = os.path.join(base_path, 'releases')
@@ -99,9 +104,8 @@ class Release(Transaction):
         env.base_dir = self.current_release_path()
         run('mkdir -p {}'.format(env.base_dir))
         self.on_rollback('rm -rf \'{}\''.format(env.base_dir))
-        run('ln -vs {0}/{{log,static}} {1}/'.format(
-            self.shared_path, env.base_dir
-        ))
+        for shared_path in self.shared:
+            self.link_shared(shared_path, create=True)
 
     def current_release(self):
         '''Return or generate a new release name'''
@@ -112,6 +116,27 @@ class Release(Transaction):
     def current_release_path(self):
         '''Path for current release'''
         return os.path.join(self.release_path, self.current_release())
+
+    def link_shared(self, name, create=False):
+        '''Link a path in shared to the current release
+
+        :param name: path in shared to link
+        :param create: create shared path if not exists, default=False
+        '''
+        rel = os.path.join(self.current_release_path(), name)
+        shared = os.path.join(self.shared_path, name)
+        if not exists(shared):
+            if create:
+                run('mkdir {0}'.format(shared))
+            else:
+                error('Shared path {name} does not exists'.format(
+                    name=name
+                ))
+        if not exists(rel):
+            run('ln -s {shared} {rel}'.format(
+                shared=shared,
+                rel=rel
+            ))
 
     def cleanup(self):
         '''Clean up old releases from the release path'''
