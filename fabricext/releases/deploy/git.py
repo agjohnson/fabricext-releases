@@ -32,12 +32,9 @@ class GitDeploy(DeployBase):
             fn = getattr(self, 'checkout')
         except AttributeError:
             pass
-        finally:
+        else:
             fn()
         super(GitDeploy, self).build()
-
-    def checkout(self):
-        raise NotImplementedError('Missing method `checkout`')
 
     def sync(self):
         try:

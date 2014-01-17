@@ -27,24 +27,33 @@ class DeployBase(TaskInjector):
             fn = getattr(self, 'compile')
         except AttributeError:
             pass
-        finally:
+        else:
             fn()
 
     @methodtask
     def update(self):
         '''Sync project with server'''
         with self.release:
+            # Pre sync setup
+            try:
+                fn = getattr(self, 'setup')
+            except AttributeError:
+                pass
+            else:
+                fn()
+            # Sync files to remote
             try:
                 fn = getattr(self, 'sync')
             except AttributeError:
                 pass
-            finally:
+            else:
                 fn()
+                # Post sync setup
                 try:
                     fn = getattr(self, 'finalize')
                 except AttributeError:
                     pass
-                finally:
+                else:
                     fn()
 
     def local_path(self, *args):
