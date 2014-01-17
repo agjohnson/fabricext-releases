@@ -56,6 +56,11 @@ class DeployBase(TaskInjector):
                 else:
                     fn()
 
+    @methodtask
+    def rollback(self):
+        '''Rollback to previous release'''
+        self.release.rollback_release()
+
     def local_path(self, *args):
         return os.path.join(
             os.path.dirname(env.real_fabfile),
