@@ -58,13 +58,20 @@ class Transaction(object):
         Each command in `rollback_cmds` will be executed remotely. If `cmd` is a
         string, execute remotely. If `cmd` is a function, call the function.
         '''
-        for cmd in self.rollback_cmds:
+        for cmd in self.get_rollback_cmds():
             if isinstance(cmd, str):
                 run(cmd)
             elif isinstance(cmd, types.FunctionType):
                 cmd()
             else:
                 raise Exception('Unknown rollback type')
+
+    def get_rollback_cmds(self):
+        try:
+            while True:
+                yield self.rollback_cmds.pop()
+        except IndexError:
+            pass
 
 
 # For readability

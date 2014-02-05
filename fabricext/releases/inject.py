@@ -35,7 +35,9 @@ class TaskInjector(object):
                 try:
                     # Insert directly into Fabric command state
                     wrapped = fn.task(getattr(self, name))
-                    state.commands[wrapped.name] = wrapped
+                    if namespace is not None:
+                        name = '-'.join([namespace, name])
+                    state.commands[name] = wrapped
                     state.env.new_style_tasks = True
                 except:
                     pass

@@ -11,7 +11,6 @@ from fabric.utils import error, warn
 from fabric.contrib.files import exists
 
 from .transaction import Transaction
-#from .inject import TaskInjector
 
 
 class Release(Transaction):
@@ -63,17 +62,17 @@ class Release(Transaction):
         super(Release, self).__init__()
 
     def __enter__(self):
-        self.setup()
+        execute(self.setup)
         super(Release, self).__enter__()
         return self
 
     def __exit__(self, type, value, tb):
         if tb is not None:
-            error('Release failed.', func=warn)
+            error('Release failed.', func=warn, exception=value)
         else:
             puts(green('Release successful.'))
-            self.symlink()
-            self.cleanup()
+            execute(self.symlink)
+            execute(self.cleanup)
         super(Release, self).__exit__(type, value, tb)
 
     def setup(self):
@@ -103,9 +102,13 @@ class Release(Transaction):
         # Make dir for release
         env.base_dir = self.current_release_path()
         run('mkdir -p {}'.format(env.base_dir))
-        self.on_rollback('rm -rf \'{}\''.format(env.base_dir))
+        self.on_rollback(lambda: execute(self.revert_release))
         for shared_path in self.shared:
             self.link_shared(shared_path, create=True)
+
+    def revert_release(self):
+        '''Revert partially deployed release'''
+        run('rm -rf \'{}\''.format(env.base_dir))
 
     def current_release(self):
         '''Return or generate a new release name'''
@@ -148,14 +151,14 @@ class Release(Transaction):
             rels.reverse()
             del rels[:5]
             map(
-                lambda d: run('rm -rvf \'{}\''.format(d)),
+                lambda d: run('rm -rf \'{}\''.format(d)),
                 [os.path.join(self.release_path, d) for d in rels]
             )
 
     def symlink(self):
         '''Symlink `current_path` to `current_rel`'''
         if exists(self.current_path):
-            run('rm {}'.format(self.current_path))
+            run('rm -rf {}'.format(self.current_path))
         run('ln -nfs {0} {1}'.format(
             self.current_release_path(),
             self.current_path

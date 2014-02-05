@@ -5,7 +5,7 @@ Fabric Git release deployment model
 import os
 import os.path
 
-from fabric.api import run, lcd, local, puts
+from fabric.api import run, lcd, local, puts, execute, runs_once
 from fabric.utils import error
 from fabric.colors import green
 from fabric.contrib.project import rsync_project
@@ -33,7 +33,7 @@ class GitDeploy(DeployBase):
         except AttributeError:
             pass
         else:
-            fn()
+            execute(fn)
         super(GitDeploy, self).build()
 
     def sync(self):
@@ -59,6 +59,7 @@ class GitIndexDeploy(GitDeploy):
     :param branch: optional branch name
     '''
 
+    @runs_once
     def checkout(self):
         puts(green('Checking out index to temporary path.'))
         try:
