@@ -182,14 +182,14 @@ class Release(Transaction):
             self.current_rel
         )))
         self.symlink()
-        run('rm -rf \'{}\''.format(
+        run('rm -rf \'{0}\''.format(
             os.path.join(self.release_path, old_rel)
         ))
 
     def releases(self):
         '''Fetch a list of releases'''
         with hide('stdout'):
-            rels = sorted(run('cd {} && find * -maxdepth 0 -type d'.format(
+            rels = sorted(run('cd {0} && find * -maxdepth 0 -type d'.format(
                 self.release_path
             )).split())
         return rels
@@ -202,7 +202,7 @@ class Release(Transaction):
             (curr_time.minute * 60) +
             (curr_time.hour * 3600)
         )
-        return "{}.{}".format(
+        return "{0}.{1}".format(
             date.today().isoformat(),
             seconds
         )

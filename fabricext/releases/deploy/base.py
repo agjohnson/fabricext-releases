@@ -2,7 +2,8 @@
 
 import os.path
 
-from fabric.api import env, execute, abort, runs_once
+from fabric.api import env, execute, abort, runs_once, puts
+from fabric.colors import green
 
 from ..release import Release
 from ..inject import TaskInjector, methodtask
@@ -10,12 +11,19 @@ from ..inject import TaskInjector, methodtask
 
 class DeployBase(TaskInjector):
 
-    def __init__(self, deploy_path, release=None):
-        self.deploy_path = deploy_path
-        if release is None:
-            release = Release(deploy_path)
-        self.release = release
+    def __init__(self, deploy_path=None, release=None, hosts=None, roles=None,
+            **kwargs):
         self.envs = {}
+        if release is not None or deploy_path is not None:
+            self.add_env(
+                'default',
+                deploy_path=deploy_path,
+                release=release,
+                default=True,
+                hosts=hosts,
+                roles=roles,
+                **kwargs
+            )
 
         # Set fabric options
         env.new_style_tasks = True
@@ -75,12 +83,13 @@ class DeployBase(TaskInjector):
     def env(self, role):
         '''Set environment role to ROLE'''
         try:
-            for (k, v) in self.envs[role].items():
-                setattr(self, k, v)
+            self.set_env(**self.envs[role])
+            self.update_tasks()
         except KeyError:
             abort("Missing environment role '{0}'".format(role))
 
-    def add_env(self, role, **kwargs):
+    def add_env(self, role, deploy_path=None, release=None, default=False,
+            hosts=[], roles=[], **kwargs):
         '''Add environment role to role lookup
 
         All `kwargs` specified here will override attributes on an instance of
@@ -97,9 +106,36 @@ class DeployBase(TaskInjector):
             fab env:prod update
 
         :param role: role name
+        :param deploy_path: deploy path to create release
+        :param release: customized release
+        :param default: set env as default environment
+        :param hosts: set roles for hosts
+        :param roles: set roles for tasks
         :param kwargs: keyword arguments for overriding instance variables
         '''
-        self.envs[role] = kwargs
+        # Create release object
+        if release is None and deploy_path is not None:
+            self.deploy_path = deploy_path
+            release = Release(deploy_path)
+        elif release is not None:
+            self.deploy_path = release.base_path
+        else:
+            raise ValueError('Missing both deploy_path and release keywords')
+
+        self.envs[role] = {
+            'deploy_path': deploy_path,
+            'release': release,
+            'hosts': hosts,
+            'roles': roles
+        }
+        self.envs[role].update(kwargs)
+        if default:
+            self.set_env(**self.envs[role])
+
+    def set_env(self, **kwargs):
+        '''Set deploy arguments based on environment arguments'''
+        for (k, v) in kwargs.items():
+            setattr(self, k, v)
 
     def local_path(self, *args):
         return os.path.join(
