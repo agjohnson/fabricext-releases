@@ -2,8 +2,8 @@
 
 import os.path
 
-from fabric.api import env, execute, abort, runs_once, puts
-from fabric.colors import green
+from fabric.api import env, execute, abort, runs_once
+from fabric.tasks import _is_task, WrappedCallableTask
 
 from ..release import Release
 from ..inject import TaskInjector, methodtask
@@ -45,27 +45,10 @@ class DeployBase(TaskInjector):
     def update(self):
         '''Sync project with server'''
         with self.release:
-            # Pre sync setup
-            try:
-                fn = getattr(self, 'setup')
-            except AttributeError:
-                pass
-            else:
-                execute(fn)
-            # Sync files to remote
-            try:
-                fn = getattr(self, 'sync')
-            except AttributeError:
-                pass
-            else:
-                execute(fn)
-            # Post sync setup
-            try:
-                fn = getattr(self, 'finalize')
-            except AttributeError:
-                pass
-            else:
-                execute(fn)
+            # Pre sync setup, sync, and post sync
+            self.execute_pseudo_task('setup')
+            self.execute_pseudo_task('sync')
+            self.execute_pseudo_task('finalize')
 
     @methodtask
     def finalize(self):
@@ -136,6 +119,26 @@ class DeployBase(TaskInjector):
         '''Set deploy arguments based on environment arguments'''
         for (k, v) in kwargs.items():
             setattr(self, k, v)
+
+    def execute_pseudo_task(self, fn_name):
+        '''Safely call a function as a WrappedCallableTask
+
+        This looks up a function `fn_name` and creates a
+        :py:class:`WrappedCallableTask` object out of the found function. The
+        task is then updated with extra parameters from the base deploy object.
+
+        :param fn_name: function name to try
+        '''
+        try:
+            fn = getattr(self, fn_name)
+            if not _is_task(fn):
+                fn = WrappedCallableTask(fn)
+            fn.hosts = self.hosts
+            fn.roles = self.roles
+        except AttributeError:
+            pass
+        else:
+            execute(fn)
 
     def local_path(self, *args):
         return os.path.join(
