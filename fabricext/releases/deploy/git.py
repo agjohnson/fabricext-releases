@@ -41,7 +41,7 @@ class GitDeploy(DeployBase):
             puts(green('Rsync files to remote host.'))
             rsync_project(
                 remote_dir=self.remote_path('cache'),
-                local_dir="{}/".format(self.build_path),
+                local_dir="{0}/".format(self.build_path),
                 delete=True,
                 extra_opts='-c'
             )
