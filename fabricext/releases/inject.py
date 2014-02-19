@@ -41,3 +41,11 @@ class TaskInjector(object):
                     state.env.new_style_tasks = True
                 except:
                     pass
+
+    def update_tasks(self):
+        '''Alters tasks mid-run to change hosts and roles'''
+        for name in state.commands:
+            if hasattr(self, 'hosts'):
+                state.commands[name].hosts = self.hosts
+            if hasattr(self, 'roles'):
+                state.commands[name].roles = self.roles

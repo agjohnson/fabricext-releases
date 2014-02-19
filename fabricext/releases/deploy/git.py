@@ -16,9 +16,8 @@ from .base import DeployBase
 
 class GitDeploy(DeployBase):
 
-    def __init__(self, name, deploy_path, build_path=None, *args, **kwargs):
-        super(GitDeploy, self).__init__(deploy_path, *args, **kwargs)
-        self.name = name
+    def __init__(self, build_path=None, *args, **kwargs):
+        super(GitDeploy, self).__init__(*args, **kwargs)
         if build_path is None:
             build_path = self.local_path('build')
         self.build_path = build_path
