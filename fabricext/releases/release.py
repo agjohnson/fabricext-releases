@@ -88,7 +88,7 @@ class Release(Transaction):
         with settings(warn_only=True):
             for path in [self.release_path, self.shared_path]:
                 if not exists(path):
-                    run('mkdir -p {}'.format(path))
+                    run('mkdir -p {0}'.format(path))
         self.create_release()
 
     def create_release(self):
@@ -101,14 +101,14 @@ class Release(Transaction):
         puts(green('Creating new release path'))
         # Make dir for release
         env.base_dir = self.current_release_path()
-        run('mkdir -p {}'.format(env.base_dir))
+        run('mkdir -p {0}'.format(env.base_dir))
         self.on_rollback(lambda: execute(self.revert_release))
         for shared_path in self.shared:
             self.link_shared(shared_path, create=True)
 
     def revert_release(self):
         '''Revert partially deployed release'''
-        run('rm -rf \'{}\''.format(env.base_dir))
+        run('rm -rf \'{0}\''.format(env.base_dir))
 
     def current_release(self):
         '''Return or generate a new release name'''
@@ -151,14 +151,14 @@ class Release(Transaction):
             rels.reverse()
             del rels[:5]
             map(
-                lambda d: run('rm -rf \'{}\''.format(d)),
+                lambda d: run('rm -rf \'{0}\''.format(d)),
                 [os.path.join(self.release_path, d) for d in rels]
             )
 
     def symlink(self):
         '''Symlink `current_path` to `current_rel`'''
         if exists(self.current_path):
-            run('rm -rf {}'.format(self.current_path))
+            run('rm -rf {0}'.format(self.current_path))
         run('ln -nfs {0} {1}'.format(
             self.current_release_path(),
             self.current_path
@@ -182,14 +182,14 @@ class Release(Transaction):
             self.current_rel
         )))
         self.symlink()
-        run('rm -rf \'{}\''.format(
+        run('rm -rf \'{0}\''.format(
             os.path.join(self.release_path, old_rel)
         ))
 
     def releases(self):
         '''Fetch a list of releases'''
         with hide('stdout'):
-            rels = sorted(run('cd {} && find * -maxdepth 0 -type d'.format(
+            rels = sorted(run('cd {0} && find * -maxdepth 0 -type d'.format(
                 self.release_path
             )).split())
         return rels
@@ -202,7 +202,7 @@ class Release(Transaction):
             (curr_time.minute * 60) +
             (curr_time.hour * 3600)
         )
-        return "{}.{}".format(
+        return "{0}.{1}".format(
             date.today().isoformat(),
             seconds
         )
