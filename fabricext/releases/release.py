@@ -11,6 +11,7 @@ from fabric.utils import error, warn
 from fabric.contrib.files import exists
 
 from .transaction import Transaction
+from .util import execute_pseudo_task
 
 
 class Release(Transaction):
@@ -62,7 +63,7 @@ class Release(Transaction):
         super(Release, self).__init__()
 
     def __enter__(self):
-        execute(self.setup)
+        execute_pseudo_task(fn=self.setup)
         super(Release, self).__enter__()
         return self
 
@@ -71,8 +72,8 @@ class Release(Transaction):
             error('Release failed.', func=warn, exception=value)
         else:
             puts(green('Release successful.'))
-            execute(self.symlink)
-            execute(self.cleanup)
+            execute_pseudo_task(fn=self.symlink)
+            execute_pseudo_task(fn=self.cleanup)
         super(Release, self).__exit__(type, value, tb)
 
     def setup(self):
@@ -102,7 +103,7 @@ class Release(Transaction):
         # Make dir for release
         env.base_dir = self.current_release_path()
         run('mkdir -p {0}'.format(env.base_dir))
-        self.on_rollback(lambda: execute(self.revert_release))
+        self.on_rollback(lambda: execute_pseudo_task(fn=self.revert_release))
         for shared_path in self.shared:
             self.link_shared(shared_path, create=True)
 

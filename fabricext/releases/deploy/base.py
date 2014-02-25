@@ -2,11 +2,11 @@
 
 import os.path
 
-from fabric.api import env, execute, abort, runs_once
-from fabric.tasks import _is_task, WrappedCallableTask
+from fabric.api import env, abort, runs_once
 
 from ..release import Release
 from ..inject import TaskInjector, methodtask
+from ..util import execute_pseudo_task
 
 
 class DeployBase(TaskInjector):
@@ -46,11 +46,10 @@ class DeployBase(TaskInjector):
         '''Sync project with server'''
         with self.release:
             # Pre sync setup, sync, and post sync
-            self.execute_pseudo_task('setup')
-            self.execute_pseudo_task('sync')
-            self.execute_pseudo_task('finalize')
+            execute_pseudo_task(obj=self, name='setup')
+            execute_pseudo_task(obj=self, name='sync')
+            execute_pseudo_task(obj=self, name='finalize')
 
-    @methodtask
     def finalize(self):
         '''Finalize release'''
         self.release.symlink()
@@ -119,26 +118,10 @@ class DeployBase(TaskInjector):
         '''Set deploy arguments based on environment arguments'''
         for (k, v) in kwargs.items():
             setattr(self, k, v)
-
-    def execute_pseudo_task(self, fn_name):
-        '''Safely call a function as a WrappedCallableTask
-
-        This looks up a function `fn_name` and creates a
-        :py:class:`WrappedCallableTask` object out of the found function. The
-        task is then updated with extra parameters from the base deploy object.
-
-        :param fn_name: function name to try
-        '''
         try:
-            fn = getattr(self, fn_name)
-            if not _is_task(fn):
-                fn = WrappedCallableTask(fn)
-            fn.hosts = self.hosts
-            fn.roles = self.roles
-        except AttributeError:
+            env.hosts = kwargs['hosts']
+        except KeyError:
             pass
-        else:
-            execute(fn)
 
     def local_path(self, *args):
         return os.path.join(
